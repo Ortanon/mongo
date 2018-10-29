@@ -3,10 +3,10 @@ Docker Official doesn't maintain an Alpine-based MongoDB image. I'm sure they ha
 
 ## Getting started
 
-0. Install [Docker](https://www.docker.com/products/docker-desktop).
-0. Pull this image.
+1. Install [Docker](https://www.docker.com/products/docker-desktop).
+2. Pull this image.
 
-	$ docker pull karimtemple/mongo
+		$ docker pull karimtemple/mongo
 
 ## Getting busy
 
@@ -18,7 +18,7 @@ MongoDB's workflow, syntax, and documentation are all kind of a pain in the ass 
 
 **Storage**
 
-Set up a Docker volume to let docker virtualize the storage for MongoDB. The defaults work fine. The example volume name here is "mongofiles":
+Set up a Docker volume to let docker virtualize the storage for MongoDB. The defaults work fine. This example volume name just happens to be "mongofiles":
 
 	$ docker volume create mongofiles
 
@@ -30,13 +30,16 @@ The image's CMD is using the `--auth` flag by default, but Docker lets you overr
 	$ docker exec -it db mongo
 	> use admin
 	> db.createUser({ user: "whatever", pwd: "something", roles: [{role: "readWrite" db: "example"}], mechanisms: ["SCRAM-SHA-1"] })
-	$ docker stop db
+	$ docker container rm -f db
 
 ### Development
 
 You can run the MongoDB container like a service now and use it in your app:
 
-	$ docker run --name db -d -v devdata:/data/db --restart=unless-stopped karimtemple/mongo
+*devdb.sh*
+```shell
+$ docker run --name db -d -v devdata:/data/db --restart=unless-stopped karimtemple/mongo
+```
 
 Of course, you can use something like `-i` instead of `-d` to watch the mongod output.
 
@@ -48,8 +51,14 @@ Add `-p 27017:27017` if you want to use Mongo clients in your host OS, but it's 
 
 Then you can get real fancy in your app container like:
 
-	$ docker run --name exampleapp -a stdout -a stderr -p 3000:3000 -e "MONGODB_URL=mongodb://testuser:password@172.17.0.2:27017/?authSource=admin" exampleimage:latest
+*app.sh*
+```shell
+$ docker run --name exampleapp -i -p 3000:3000 -e "MONGODB_URL=mongodb://testuser:password@172.17.0.2:27017/?authSource=admin" exampleimage:latest
+```
 
-If you're using NodeJS, you can have a container run your local code, e.g.:
+If you're using NodeJS, you can have a NodeJS container run your local code so you can see containerized behavior without having to constantly build images, e.g.:
 
-	$ docker run --rm --name app -v "$PWD":/app -w /app -p 3000:3000 -i -e "MONGODB_URL=mongodb://testuser:password@172.17.0.2:27017/?authSource=admin" node:alpine npm start
+*dev.sh*
+```shell
+$ docker run --rm --name app -v "$PWD":/app -w /app -p 3000:3000 -i -e "MONGODB_URL=mongodb://testuser:password@172.17.0.2:27017/?authSource=admin" node:alpine npm start
+```
